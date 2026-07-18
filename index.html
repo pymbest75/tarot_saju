@@ -414,18 +414,16 @@
 /* ========================= paywall config ========================= */
 
 var UNLOCK_PRICE='3,000원';
-var UNLOCK_CODE='happy1004';
+var CODE_API_URL='https://script.google.com/macros/s/AKfycbwSzSLfehWldSbZ3eg1z4oBLYv0Jp7U_JHCrVLKOpFQ7HHS97u_RiwLV1NJQwpypdexAw/exec';
 var PAY_BANK='토스뱅크 1000-0161-1779 (박승연)';
 var PAY_KAKAO='https://qr.kakaopay.com/Ej83aKvZf';
 var RESERVE_URL='https://naver.me/FgEmvN1U';
-var UNLOCK_STORAGE_KEY='saju_unlocked_v1';
 
 function isUnlocked(){
-  try{ return localStorage.getItem(UNLOCK_STORAGE_KEY)==='1'; }
-  catch(e){ return false; }
+  return !!(state && state.unlocked);
 }
 function setUnlocked(){
-  try{ localStorage.setItem(UNLOCK_STORAGE_KEY,'1'); }catch(e){}
+  state.unlocked=true;
 }
 
 /* ========================= data ========================= */
@@ -1233,7 +1231,7 @@ function freshState(){
   return {
     name:'', calType:'solar', birthDate:'', lunarInput:null,
     birthHour:null, hourKnown:true, birthCity:'unknown', gender:null, concern:null,
-    deck:[], drawn:[], saju:null, timing:null, adviceMessage:null
+    deck:[], drawn:[], saju:null, timing:null, adviceMessage:null, unlocked:false
   };
 }
 
@@ -2450,13 +2448,36 @@ function renderResult(){
 
     var doUnlock=function(){
       var input=document.getElementById('unlock-code-input');
+      var btn=document.getElementById('unlock-btn');
+      var errBox=document.getElementById('unlock-error');
       var val=(input.value||'').trim();
-      if(val && val.toLowerCase()===UNLOCK_CODE.toLowerCase()){
-        setUnlocked();
-        renderResult();
-      } else {
-        document.getElementById('unlock-error').textContent='코드가 일치하지 않아요. 다시 확인해주세요.';
+      if(!val){
+        errBox.textContent='코드를 입력해주세요.';
+        return;
       }
+      btn.disabled=true;
+      btn.textContent='확인 중…';
+      errBox.textContent='';
+
+      fetch(CODE_API_URL+'?action=verify&code='+encodeURIComponent(val))
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          if(data && data.ok){
+            setUnlocked();
+            renderResult();
+          } else {
+            var msg='코드가 일치하지 않아요. 다시 확인해주세요.';
+            if(data && data.reason==='used') msg='이미 사용된 코드예요. 새 코드가 필요하시면 문의해주세요.';
+            errBox.textContent=msg;
+            btn.disabled=false;
+            btn.textContent='확인';
+          }
+        })
+        .catch(function(){
+          errBox.textContent='확인 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
+          btn.disabled=false;
+          btn.textContent='확인';
+        });
     };
     document.getElementById('unlock-btn').addEventListener('click', doUnlock);
     document.getElementById('unlock-code-input').addEventListener('keydown', function(e){
