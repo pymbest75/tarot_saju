@@ -122,6 +122,58 @@
   }
   .section-hint{color:var(--text-muted);font-size:.88rem;margin:0 0 var(--space-4);}
 
+  /* ---- lock / unlock paywall ---- */
+  .lock-wrap{position:relative;}
+  .lock-blur{
+    filter:blur(7px);
+    user-select:none;
+    pointer-events:none;
+    max-height:420px;
+    overflow:hidden;
+    -webkit-mask-image:linear-gradient(180deg,#000 40%,transparent 95%);
+    mask-image:linear-gradient(180deg,#000 40%,transparent 95%);
+  }
+  .lock-panel{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding-bottom:var(--space-4);
+    text-align:center;
+  }
+  .lock-badge{
+    font-family:var(--font-display);font-size:.78rem;letter-spacing:.1em;
+    color:var(--gold);text-transform:uppercase;margin-bottom:var(--space-2);
+  }
+  .lock-title{font-family:var(--font-display);font-size:1.15rem;margin:0 0 .4rem;color:var(--text);}
+  .lock-desc{color:var(--text-muted);font-size:.86rem;margin:0 0 var(--space-3);max-width:340px;}
+  .pay-box{
+    background:var(--ink-950);border:1px solid var(--gold);
+    padding:var(--space-3) var(--space-4);max-width:340px;width:100%;
+    margin-bottom:var(--space-3);text-align:left;
+  }
+  .pay-row{display:flex;justify-content:space-between;align-items:baseline;font-size:.85rem;margin-bottom:.5rem;}
+  .pay-row:last-child{margin-bottom:0;}
+  .pay-row .pay-label{color:var(--text-muted);}
+  .pay-row .pay-value{color:var(--text);font-variant-numeric:tabular-nums;}
+  .pay-links{display:flex;gap:.5rem;margin-top:.6rem;}
+  .pay-links a{
+    flex:1;text-align:center;font-size:.8rem;padding:.5rem;
+    border:1px solid var(--rule);color:var(--text-muted);text-decoration:none;
+    transition:border-color .2s,color .2s;
+  }
+  .pay-links a:hover{border-color:var(--gold);color:var(--text);}
+  .unlock-row{display:flex;gap:.5rem;max-width:340px;width:100%;}
+  .unlock-row input{
+    flex:1;background:var(--ink-950);border:1px solid var(--rule);color:var(--text);
+    font-family:var(--font-body);font-size:.95rem;padding:.65rem .8rem;
+  }
+  .unlock-row input:focus-visible{outline:2px solid var(--gold);outline-offset:1px;}
+  .unlock-error{color:var(--vermilion);font-size:.8rem;min-height:1.2em;margin-top:.5rem;}
+  .reserve-box{
+    max-width:420px;width:100%;margin:var(--space-3) auto 0;
+    border:1px solid var(--rule);padding:var(--space-3) var(--space-4);text-align:center;
+  }
+  .reserve-box p{color:var(--text-muted);font-size:.86rem;margin:0 0 var(--space-2);}
+
   /* buttons */
   .btn{
     font-family:var(--font-display);
@@ -358,6 +410,23 @@
 <script>
 (function(){
 "use strict";
+
+/* ========================= paywall config ========================= */
+
+var UNLOCK_PRICE='3,000원';
+var UNLOCK_CODE='happy1004';
+var PAY_BANK='토스뱅크 1000-0161-1779 (박승연)';
+var PAY_KAKAO='https://qr.kakaopay.com/Ej83aKvZf';
+var RESERVE_URL='https://naver.me/FgEmvN1U';
+var UNLOCK_STORAGE_KEY='saju_unlocked_v1';
+
+function isUnlocked(){
+  try{ return localStorage.getItem(UNLOCK_STORAGE_KEY)==='1'; }
+  catch(e){ return false; }
+}
+function setUnlocked(){
+  try{ localStorage.setItem(UNLOCK_STORAGE_KEY,'1'); }catch(e){}
+}
 
 /* ========================= data ========================= */
 
@@ -2313,7 +2382,7 @@ function renderResult(){
 
   var paras=synthesisParagraphs(sy, state.drawn);
 
-  setStage(
+  var freeHtml=
     '<div class="panel-card">'+
       '<h2 class="section-title">사주 풀이</h2>'+
       '<p class="section-hint">'+(state.hourKnown?'년주 · 월주 · 일주 · 시주':'년주 · 월주 · 일주 (태어난 시간 미상)')+
@@ -2329,23 +2398,71 @@ function renderResult(){
         lackHtml+
       '</div>'+
     '</div>'+
+    '<div class="divider"></div>';
 
-    '<div class="divider"></div>'+
-
+  var gatedHtml=
     lifeFlowHtml()+
-
     wealthTimingHtml()+
-
     '<div class="panel-card panel-card-highlight">'+
       '<h2 class="section-title">종합 풀이</h2>'+
       '<div class="prose">'+paras.map(function(p){return '<p>'+p+'</p>';}).join('')+'</div>'+
+    '</div>';
+
+  var reserveHtml=
+    '<div class="reserve-box">'+
+      '<p>더 깊은 이야기가 궁금하시다면, 박승연타로에서 직접 상담도 받아보실 수 있어요.</p>'+
+      '<a class="btn btn-ghost" href="'+RESERVE_URL+'" target="_blank" rel="noopener">박승연타로 상담 예약하기 →</a>'+
+    '</div>';
+
+  if(isUnlocked()){
+    setStage(
+      freeHtml+
+      gatedHtml+
       '<div class="btn-row">'+
         '<button class="btn btn-primary" id="to-advice">오늘의 조언 카드 보기 →</button>'+
       '</div>'+
-    '</div>'
-  );
+      reserveHtml
+    );
+    document.getElementById('to-advice').addEventListener('click', renderAdvice);
+  } else {
+    setStage(
+      freeHtml+
+      '<div class="lock-wrap">'+
+        '<div class="lock-blur">'+gatedHtml+'</div>'+
+        '<div class="lock-panel">'+
+          '<span class="lock-badge">🔒 잠금 해제</span>'+
+          '<h3 class="lock-title">생애 흐름 · 재물운 · 종합 풀이 + 오늘의 조언 카드</h3>'+
+          '<p class="lock-desc">'+UNLOCK_PRICE+' 입금 후 안내받으신 코드를 입력하면 나머지 전체 내용을 확인하실 수 있어요.</p>'+
+          '<div class="pay-box">'+
+            '<div class="pay-row"><span class="pay-label">상담료</span><span class="pay-value">'+UNLOCK_PRICE+'</span></div>'+
+            '<div class="pay-row"><span class="pay-label">계좌</span><span class="pay-value">'+PAY_BANK+'</span></div>'+
+            '<div class="pay-links"><a href="'+PAY_KAKAO+'" target="_blank" rel="noopener">카카오페이로 송금</a></div>'+
+          '</div>'+
+          '<div class="unlock-row">'+
+            '<input type="text" id="unlock-code-input" placeholder="해제 코드 입력">'+
+            '<button class="btn btn-primary" id="unlock-btn">확인</button>'+
+          '</div>'+
+          '<div class="unlock-error" id="unlock-error"></div>'+
+        '</div>'+
+      '</div>'+
+      reserveHtml
+    );
 
-  document.getElementById('to-advice').addEventListener('click', renderAdvice);
+    var doUnlock=function(){
+      var input=document.getElementById('unlock-code-input');
+      var val=(input.value||'').trim();
+      if(val && val.toLowerCase()===UNLOCK_CODE.toLowerCase()){
+        setUnlocked();
+        renderResult();
+      } else {
+        document.getElementById('unlock-error').textContent='코드가 일치하지 않아요. 다시 확인해주세요.';
+      }
+    };
+    document.getElementById('unlock-btn').addEventListener('click', doUnlock);
+    document.getElementById('unlock-code-input').addEventListener('keydown', function(e){
+      if(e.key==='Enter') doUnlock();
+    });
+  }
 }
 
 /* ---- advice ---- */
@@ -2374,7 +2491,11 @@ function renderAdvice(){
         '<button class="btn btn-ghost" id="to-detail">사주 · 카드 다시 보기</button>'+
         '<button class="btn btn-silver" id="restart">새로운 이야기 시작하기</button>'+
       '</div>'+
-    '</div></div>'
+    '</div></div>'+
+    '<div class="reserve-box">'+
+      '<p>오늘 이야기가 마음에 남으셨다면, 박승연타로에서 더 깊은 이야기를 나눠보세요.</p>'+
+      '<a class="btn btn-ghost" href="'+RESERVE_URL+'" target="_blank" rel="noopener">박승연타로 상담 예약하기 →</a>'+
+    '</div>'
   );
 
   document.getElementById('to-detail').addEventListener('click', renderResult);
