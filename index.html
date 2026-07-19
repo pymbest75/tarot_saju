@@ -1313,7 +1313,25 @@ var TEN_GOD_FLOW_NUANCE={
   wealth:'그 안에서도 실질적인 결실을 향한 기운이 은은히 겹쳐와요.',
   authority:'그 안에서도 책임과 무게를 다정하게 감당해야 할 결이 조용히 겹쳐와요.'
 };
+/* 종합 풀이에서 "지금의 운 흐름"을 짧게 짚어줄 때 쓰는 축약 버전. TEN_GOD_FLOW_TEXT_A/B(생애 전반 운의 흐름 섹션용)와는 다른 문장으로 작성. */
+var TEN_GOD_FLOW_BRIEF={
+  self:'지금은 스스로 판단하고 움켜쥔 방향으로 나아가려는 힘이 강해지는 흐름이에요. 남의 속도에 맞추기보다, 내 걸음의 리듬을 믿어도 좋은 때예요.',
+  resource:'지금은 곁의 다정한 도움과 배움이 자연스럽게 흘러들어오는 흐름이에요. 서두르지 않아도 필요한 것들이 하나씩 채워지고 있어요.',
+  output:'지금은 마음속에 담아둔 것을 세상 밖으로 꺼내 보이고 싶은 흐름이에요. 표현하고 나누는 만큼 반응이 돌아오는 시기예요.',
+  wealth:'지금은 애써온 것들이 눈에 보이는 결실로 돌아오기 좋은 흐름이에요. 다만 그 결실을 붙잡기 위한 신중함도 함께 필요해요.',
+  authority:'지금은 책임과 무게가 조금씩 커지는 만큼, 그 자리에 걸맞은 신뢰도 함께 쌓여가는 흐름이에요. 무겁게 느껴져도 결국 나를 단단하게 만들어주는 시간이에요.'
+};
 
+/* 종합 풀이 마지막 "선택 제안" 문단에서 고민(CONCERNS)별로 쓰는 템플릿. {trait} 자리에 오행 dominant의 trait가 들어가 오행별로도 결이 달라짐. */
+var CHOICE_SUGGESTION={
+  love:'지금 {trait}을 지니고 계신 만큼, 관계 앞에서는 그 기운을 조급함이 아니라 다정한 꾸준함으로 풀어내는 선택이 도움이 될 것 같아요.',
+  work:'지금 {trait}을 지니고 계신 만큼, 일 앞에서는 그 힘을 눈앞의 성과보다 방향을 정하는 데 먼저 써보는 선택이 도움이 될 것 같아요.',
+  money:'지금 {trait}을 지니고 계신 만큼, 재물 앞에서는 그 기운을 큰 결정 한 번보다 작은 관리를 촘촘히 쌓는 쪽으로 써보는 선택이 도움이 될 것 같아요.',
+  health:'지금 {trait}을 지니고 계신 만큼, 몸과 마음 앞에서는 그 기운을 몰아붙이기보다 리듬을 지키는 데 먼저 써보는 선택이 도움이 될 것 같아요.',
+  mind:'지금 {trait}을 지니고 계신 만큼, 마음 앞에서는 그 기운을 답을 서둘러 찾기보다 지금의 나를 있는 그대로 바라보는 데 써보는 선택이 도움이 될 것 같아요.',
+  move:'지금 {trait}을 지니고 계신 만큼, 이동이나 이직 앞에서는 그 기운을 성급한 결정보다 조건을 하나씩 확인하는 데 먼저 써보는 선택이 도움이 될 것 같아요.',
+  exam:'지금 {trait}을 지니고 계신 만큼, 합격을 앞두고는 그 기운을 마지막 페이스 조절과 기본기를 다지는 데 써보는 선택이 도움이 될 것 같아요.'
+};
 /* ========================= state ========================= */
 
 function freshState(){
@@ -2338,19 +2356,16 @@ function cardConcernDesc(cardIdx, concern){
 }
 
 function synthesisParagraphs(sy, drawn){
-  var name=state.name;
+  var name=escapeHtml(state.name);
   var concernLabel=CONCERNS.find(function(c){return c.id===state.concern;}).label;
   var dom=sy.dominant;
   var soul=getSoulCard();
+  var t=state.timing;
 
   var c1=TAROT_DECK[drawn[0]], c2=TAROT_DECK[drawn[1]];
   var c3=TAROT_DECK[drawn[2]], c4=TAROT_DECK[drawn[3]];
   var d1=cardConcernDesc(drawn[0], state.concern), d2=cardConcernDesc(drawn[1], state.concern);
   var d3=cardConcernDesc(drawn[2], state.concern), d4=cardConcernDesc(drawn[3], state.concern);
-
-  var p1=name+'님이 마음에 품고 계신 '+concernLabel+' 이야기를 붙잡고, 사주와 소울 넘버, 그리고 카드까지 함께 펼쳐보았어요. '+
-    name+'님은 타고난 기운으로 '+dom.trait+'을 지니고 계시고, 소울 넘버 '+soul.num+'번이 보여주는 결은 '+soul.data.keyword+'에 가까워요. '+dom.desc+' '+
-    '그 위에 (과거·환경) · (현재·나) · (미래·운) · (조언 및 결과), 네 자리에 오늘 뽑으신 카드를 '+concernLabel+' 관점으로 가만히 얹어보면, 이런 이야기 한 편이 조용히 그려져요.';
 
   function splitCore(text){
     var idx=text.indexOf('. ');
@@ -2359,18 +2374,36 @@ function synthesisParagraphs(sy, drawn){
   }
   var s1=splitCore(d1), s2=splitCore(d2), s3=splitCore(d3), s4=splitCore(d4);
 
-  var p2='먼저 '+concernLabel+'을(를) 둘러싼 지난 흐름과 주변 환경을 보여주는 「과거·환경」의 자리에는 「'+c1.name+'」이 놓였어요. '+s1.core+' '+
-    '그리고 지금 '+name+'님의 마음과 태도를 비추는 「현재·나」의 자리에는 「'+c2.name+'」이 자리했어요. '+s2.core;
+  var p1=name+'님이 마음에 품고 계신 '+concernLabel+' 이야기를 붙잡고, 사주와 소울 넘버, 그리고 카드까지 함께 펼쳐보았어요. '+
+    name+'님은 타고난 기운으로 '+dom.trait+'을 지니고 계시고, 그 위에 소울 넘버 '+soul.num+'번이 보여주는 '+soul.data.keyword+'의 결이 함께 겹쳐 있어요. '+dom.desc+' '+
+    '지금 '+name+'님은 이 두 기운이 만나는 지점에서 '+concernLabel+'이라는 질문을 마주하고 계신 셈이에요. 그 질문을 조금 더 또렷하게 비춰보기 위해, 오늘 뽑으신 네 장의 카드를 하나의 이야기로 이어보았습니다.';
 
-  var p3='이대로 흘러갔을 때 다가올 운의 흐름을 보여주는 「미래·운」의 자리에는 「'+c3.name+'」이 나타났어요. '+s3.core+' '+
-    '그리고 '+name+'님에게 가장 필요한 조언과 이 흐름이 다다르게 될 결과를 함께 담은 「조언 및 결과」의 자리에는 「'+c4.name+'」이 놓였습니다. '+s4.core;
+  var lackText = sy.lackIdx>=0
+    ? ELEMENTS[sy.lackIdx].lack
+    : '오행이 비교적 고르게 갖춰져 있어, 여러 기운이 균형을 이루며 주변을 든든하게 받쳐주고 있어요.';
+  var p2=name+'님을 둘러싼 지금까지의 흐름과 여건을 살펴보면, 「'+c1.name+'」이 그 결을 보여주고 있어요. '+s1.core+' '+
+    lackText+' 이런 여건 속에서 '+name+'님은 지금의 자리까지 걸어오신 거예요.';
+
+  var p3='그 여건 위에서 지금 '+name+'님의 마음과 태도를 비추어보면, 「'+c2.name+'」이 놓여 있어요. '+s2.core+' '+
+    concernLabel+'을 마주한 지금, '+name+'님의 마음은 이미 이 흐름을 향해 조금씩 움직이고 있는 것 같아요.';
+
+  var cd=t.currentDaeun;
+  var flowCat=tenGodCategory(STEM_ELEMENT[cd.stemIdx], t.dmElement);
+  var flowBrief=TEN_GOD_FLOW_BRIEF[flowCat];
+  var p4='이대로 흘러갔을 때 다가올 운의 방향을 보여주는 자리에는 「'+c3.name+'」이 나타났어요. '+s3.core+' '+
+    '지금 지나고 있는 대운의 결도 이 흐름과 맞물려 있는데, '+flowBrief+' 카드와 사주가 같은 방향을 가리키고 있는 셈이에요.';
+
+  var choiceTpl=CHOICE_SUGGESTION[state.concern] || CHOICE_SUGGESTION.mind;
+  var choiceText=choiceTpl.replace('{trait}', dom.trait);
+  var p5=name+'님에게 가장 필요한 조언과, 이 흐름이 다다르게 될 결과를 함께 담은 자리에는 「'+c4.name+'」이 놓였습니다. '+s4.core+' '+
+    choiceText;
 
   var actionBits=[s1.rest, s2.rest, s3.rest, s4.rest].filter(function(x){return x;});
-  var closing='이 이야기는 이미 정해진 결말이 아니라, 지금부터 '+name+'님이 하나씩 채워갈 수 있는 여백에 가까워요. '+
+  var p6='이 이야기는 이미 정해진 결말이 아니라, 지금부터 '+name+'님이 하나씩 채워갈 수 있는 여백에 가까워요. '+
     actionBits.join(' ')+' '+
     '오늘 하루, 스스로에게 조금 더 다정해지셔도 좋겠어요.';
 
-  return [p1, p2, p3, closing];
+  return [p1, p2, p3, p4, p5, p6];
 }
 
 function lifeFlowHtml(){
