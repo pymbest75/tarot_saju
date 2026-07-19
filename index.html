@@ -2560,12 +2560,14 @@ function renderResult(){
       var input=document.getElementById('unlock-code-input');
       var btn=document.getElementById('unlock-btn');
       var errBox=document.getElementById('unlock-error');
+      if(btn.disabled) return;
       var val=(input.value||'').trim();
       if(!val){
         errBox.textContent='코드를 입력해주세요.';
         return;
       }
       btn.disabled=true;
+      input.disabled=true;
       btn.textContent='확인 중…';
       errBox.textContent='';
 
@@ -2580,12 +2582,14 @@ function renderResult(){
             if(data && data.reason==='used') msg='이미 3회 모두 사용된 코드예요. 새 코드가 필요하시면 문의해주세요.';
             errBox.textContent=msg;
             btn.disabled=false;
+            input.disabled=false;
             btn.textContent='확인';
           }
         })
         .catch(function(){
           errBox.textContent='확인 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
           btn.disabled=false;
+          input.disabled=false;
           btn.textContent='확인';
         });
     };
