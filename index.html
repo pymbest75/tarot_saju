@@ -245,6 +245,7 @@
   /* ---- tarot draw ---- */
   .spread-row{display:flex;gap:var(--space-3);justify-content:center;margin-bottom:var(--space-5);flex-wrap:wrap;}
   .slot{width:110px;}
+  .slot-label{text-align:center;font-size:.72rem;line-height:1.4;color:var(--text-faint);letter-spacing:.04em;margin-bottom:.35rem;}
   .slot-frame{
     height:158px;
     border:1px dashed var(--rule);
@@ -522,6 +523,93 @@ var GENDERS=[
   {id:'male',label:'남성'},
   {id:'female',label:'여성'}
 ];
+
+/* ---- soul number (수비학 소울 넘버): 생년월일 합을 한 자리 수가 될 때까지 더해 산출.
+   1~9번은 각각 메이저 아르카나 1~9번 카드(마법사~은둔자)와 대응되는 기질 카드입니다. */
+function soulNumber(y,m,d){
+  var n=y+m+d;
+  while(n>9){
+    n=String(n).split('').reduce(function(a,c){return a+parseInt(c,10);},0);
+  }
+  return n;
+}
+
+var SOUL_NUMBER_DATA={
+  1:{card:'마법사', keyword:'개척과 추진력',
+    strength:'목표가 정해지면 망설임 없이 밀고 나가는 힘과, 여러 재주를 두루 갖춘 다재다능함이 있어요.',
+    domains:{
+      work:'한 우물을 깊게 파는 전문가형에 가까워요. 스스로 길을 개척해나가는 힘이 있는 만큼, 워커홀릭처럼 몰입할 때 가장 좋은 결과가 나옵니다.',
+      love:'존중받는 관계를 중요하게 여기고 내 사람은 확실히 챙기는 편이에요. 다만 목표에 집중하다 보면 곁을 살피는 데 소홀해지기 쉬우니 균형이 필요해요.',
+      money:'스스로 쌓아온 실력과 성과가 곧 재산이 되는 흐름이라, 의외의 재물운도 따르는 편이에요.',
+      caution:'한번 밀어붙이기 시작하면 주변을 잘 살피지 못하는 고집이 있으니, 가끔은 속도를 늦추고 둘러보는 여유가 도움이 됩니다.'}},
+  2:{card:'여사제', keyword:'섬세함과 직관',
+    strength:'눈치가 빠르고 사람과 상황을 세심하게 살피는 지혜, 그리고 남다른 직관력을 지니고 있어요.',
+    domains:{
+      work:'기획, 상담, 컨설팅처럼 섬세하게 조율하는 역할에서 특히 힘을 발휘해요. 다만 벌여놓는 일이 많아 우선순위가 흐트러지지 않도록 정리하는 습관이 도움이 됩니다.',
+      love:'분명한 약속과 신뢰로 맺어지는 관계를 편안해해요. 마음이 한번 향하면 깊이 몰입하는 편이에요.',
+      money:'여러 가지를 동시에 벌이는 멀티형이라 쉽게 벌고 쉽게 쓰는 경향이 있으니, 소비 흐름을 기록해보는 것이 좋아요.',
+      caution:'예민한 직관 때문에 생각이 많아지고 스스로를 몰아붙이기 쉬우니, 마음을 쉬게 하는 시간을 따로 마련해주세요.'}},
+  3:{card:'여황제', keyword:'풍요와 포용',
+    strength:'사람과 상황을 너그럽게 품는 여유, 함께 있으면 편안해지는 분위기 메이커의 매력이 있어요.',
+    domains:{
+      work:'여러 영역으로 관심을 넓히고 사람을 챙기는 역할에서 빛을 발해요. 다양한 시도를 즐기는 편이에요.',
+      love:'폭넓게 사람들과 어울리며 그 순간에 충실한 편이에요. 다만 마음이 자주 바뀌어 변덕스럽다는 말을 들을 때도 있어요.',
+      money:'돈보다 사람과 명예를 우선하는 편이라 베푸는 데 아낌이 없어요. 배움과 경험에 투자하는 것이 좋은 흐름을 만들어줘요.',
+      caution:'베풀고도 서운함을 느낄 때가 있으니, 남을 챙기는 만큼 스스로도 먼저 챙기는 균형이 필요해요.'}},
+  4:{card:'황제', keyword:'안정과 기반',
+    strength:'쉽게 흔들리지 않는 단단한 기반을 만드는 힘, 노련함과 근성을 함께 지니고 있어요.',
+    domains:{
+      work:'조직이나 체계를 단단히 세우는 역할에 강하고, 자수성가형 리더십을 발휘해요.',
+      love:'신뢰를 바탕으로 오래가는 관계를 선호해요. 다만 계산적으로 비춰져 답답하다는 말을 들을 때도 있어요.',
+      money:'안정을 최우선으로 두고 차곡차곡 쌓아가는 타입이에요. 손해에 민감해서 큰 리스크는 피하는 편이에요.',
+      caution:'안정만 좇다 보면 좋은 기회도 재고 따지다 놓칠 수 있으니, 가끔은 과감한 결정도 필요해요.'}},
+  5:{card:'교황', keyword:'균형과 조언',
+    strength:'중재자 역할을 잘하고, 배운 것을 아낌없이 나누는 힘이 있어요.',
+    domains:{
+      work:'가르치거나 조율하는 역할, 중간관리자 자리에서 특히 힘을 발휘해요.',
+      love:'남의 이야기는 잘 들어주지만 정작 자신의 속내는 잘 드러내지 않아 혼자 삭히는 경우가 많아요.',
+      money:'큰 욕심을 부리기보다 적당한 선에서 만족하는 편이라, 과소비보다는 좋은 기회를 놓치는 쪽을 조심해야 해요.',
+      caution:'체면을 중시해 손해를 보고도 티를 잘 내지 않으니, 가끔은 솔직하게 마음을 표현하는 연습이 도움이 돼요.'}},
+  6:{card:'연인', keyword:'연결과 조화',
+    strength:'사람과 사람을 잇는 힘, 위기 앞에서도 빠르게 방향을 전환하는 순발력이 있어요.',
+    domains:{
+      work:'협업하거나 사람을 돕는 역할에서 능력을 발휘해요. 책임감이 강해 부탁을 잘 거절하지 못해요.',
+      love:'정이 많고 챙겨주는 걸 좋아해 곁에 사람이 많은 편이에요. 다만 이유 없는 서운함을 느낄 때도 있어요.',
+      money:'투자보다는 꾸준한 노력으로 쌓는 편이 잘 맞고, 절박할수록 오히려 길이 열리는 흐름이에요.',
+      caution:'늘 남을 먼저 챙기다 보면 정작 자신을 위한 시간이 부족해지니, 스스로를 위한 시간도 꼭 남겨두세요.'}},
+  7:{card:'전차', keyword:'추진력과 책임',
+    strength:'목표를 향해 거침없이 나아가는 힘과, 맡은 역할에 대한 강한 책임감이 있어요.',
+    domains:{
+      work:'조직을 이끄는 자리를 자연스럽게 맡게 되는 편이며, 성과를 만들어내는 힘이 있어요.',
+      love:'기대와 낭만이 큰 편이라 이상과 현실 사이에서 실망하기 쉬워요.',
+      money:'보여지는 것에 투자하는 경향이 있어요. 비전을 세우는 건 좋지만 과한 지출은 주의가 필요해요.',
+      caution:'성급하게 밀어붙이다 중요한 걸 놓칠 수 있으니, 한 박자 쉬어가는 여유가 도움이 돼요.'}},
+  8:{card:'힘', keyword:'인내와 부드러운 카리스마',
+    strength:'겉으로는 부드럽지만 속은 단단한 힘, 상황을 조율하는 지혜가 있어요.',
+    domains:{
+      work:'사람이나 상황을 다루는 역할, 이끌고 보살피는 자리에 잘 맞아요.',
+      love:'헌신적이지만 방향 없이 애쓰다 보면 스스로 지칠 수 있으니 마음을 살피는 게 필요해요.',
+      money:'꾸준한 노력이 재물로 이어지는 흐름이라, 조급해하지 않는 것이 오히려 유리해요.',
+      caution:'자신을 돌보지 않고 무리하는 경향이 있으니, 몸과 마음의 컨디션을 챙기는 것이 특히 중요해요.'}},
+  9:{card:'은둔자', keyword:'통찰과 자기만의 세계',
+    strength:'깊이 있는 통찰력과 자기만의 확고한 기준을 지니고 있어요.',
+    domains:{
+      work:'한 분야를 깊이 파고드는 연구자·전문가형에 잘 맞고, 혼자 몰입하는 시간에 성과가 남아요.',
+      love:'마음을 쉽게 열지 않지만, 한번 마음을 준 사람에게는 깊이 신뢰하는 편이에요.',
+      money:'화려한 한 방보다는 자신만의 전문성을 자산으로 쌓아가는 편이 잘 맞아요.',
+      caution:'혼자 생각에 잠기다 보면 무기력해지거나 고립될 수 있으니, 가끔은 바깥 공기를 쐬어주세요.'}}
+};
+
+var CONCERN_DOMAIN_MAP={love:'love', work:'work', money:'money', move:'work', exam:'work', health:'caution', mind:'caution'};
+
+/* 4자리 스프레드: (과거·환경)(현재·나)(미래·운)(조언 및 결과) — 4장을 뽑는 순서에 대응 */
+var SPREAD_POSITIONS=['과거 · 환경','현재 · 나','미래 · 운','조언 및 결과'];
+
+function getSoulCard(){
+  var dparts=state.birthDate.split('-').map(Number);
+  var num=soulNumber(dparts[0], dparts[1], dparts[2]);
+  return {num:num, data:SOUL_NUMBER_DATA[num]};
+}
 
 /* 22 bespoke line-art scenes, one per Major Arcana card, referencing the classic
    (public-domain, 1909) Rider-Waite-Smith symbolism — not a reproduction of any
@@ -1517,11 +1605,11 @@ function renderDraw(){
       '<h2 class="section-title">네 장의 카드를 뽑아드릴게요</h2>'+
       '<p class="section-hint">'+escapeHtml(state.name)+'님의 <strong style="color:var(--gold-soft);">'+
         CONCERNS.find(function(c){return c.id===state.concern;}).label+
-        '</strong>에 대한 이야기를 카드에 담아드릴게요.</p>'+
+        '</strong>에 대한 이야기를, (과거·환경) · (현재·나) · (미래·운) · (조언 및 결과) 네 자리에 담아드릴게요.</p>'+
 
       '<div class="spread-row" id="spread-row">'+
         Array.from({length:CARD_COUNT}).map(function(_,i){
-          return '<div class="slot"><div class="slot-frame" id="slot-'+i+'"></div></div>';
+          return '<div class="slot"><div class="slot-label">'+SPREAD_POSITIONS[i]+'</div><div class="slot-frame" id="slot-'+i+'"></div></div>';
         }).join('')+
       '</div>'+
 
@@ -2253,15 +2341,16 @@ function synthesisParagraphs(sy, drawn){
   var name=state.name;
   var concernLabel=CONCERNS.find(function(c){return c.id===state.concern;}).label;
   var dom=sy.dominant;
+  var soul=getSoulCard();
 
   var c1=TAROT_DECK[drawn[0]], c2=TAROT_DECK[drawn[1]];
   var c3=TAROT_DECK[drawn[2]], c4=TAROT_DECK[drawn[3]];
   var d1=cardConcernDesc(drawn[0], state.concern), d2=cardConcernDesc(drawn[1], state.concern);
   var d3=cardConcernDesc(drawn[2], state.concern), d4=cardConcernDesc(drawn[3], state.concern);
 
-  var p1=name+'님이 마음에 품고 계신 '+concernLabel+' 이야기를 붙잡고, 사주와 카드를 함께 펼쳐보았어요. '+
-    name+'님은 타고난 기운으로 '+dom.trait+'을 지니고 계시더라고요. '+dom.desc+' '+
-    '그 위에 오늘 뽑으신 네 장의 카드를 가만히 얹어보면, 이런 이야기 한 편이 조용히 그려져요.';
+  var p1=name+'님이 마음에 품고 계신 '+concernLabel+' 이야기를 붙잡고, 사주와 소울 넘버, 그리고 카드까지 함께 펼쳐보았어요. '+
+    name+'님은 타고난 기운으로 '+dom.trait+'을 지니고 계시고, 소울 넘버 '+soul.num+'번이 보여주는 결은 '+soul.data.keyword+'에 가까워요. '+dom.desc+' '+
+    '그 위에 (과거·환경) · (현재·나) · (미래·운) · (조언 및 결과), 네 자리에 오늘 뽑으신 카드를 '+concernLabel+' 관점으로 가만히 얹어보면, 이런 이야기 한 편이 조용히 그려져요.';
 
   function splitCore(text){
     var idx=text.indexOf('. ');
@@ -2270,11 +2359,11 @@ function synthesisParagraphs(sy, drawn){
   }
   var s1=splitCore(d1), s2=splitCore(d2), s3=splitCore(d3), s4=splitCore(d4);
 
-  var p2='이야기는 「'+c1.name+'」이 보여주는 자리에서 시작돼요. '+s1.core+' '+
-    '그리고 그 마음 한켠에는 「'+c2.name+'」의 결도 함께 흐르고 있어요. '+s2.core;
+  var p2='먼저 '+concernLabel+'을(를) 둘러싼 지난 흐름과 주변 환경을 보여주는 「과거·환경」의 자리에는 「'+c1.name+'」이 놓였어요. '+s1.core+' '+
+    '그리고 지금 '+name+'님의 마음과 태도를 비추는 「현재·나」의 자리에는 「'+c2.name+'」이 자리했어요. '+s2.core;
 
-  var p3='이 흐름 속에서 '+name+'님에게 가만히 힘이 되어주는 건 「'+c3.name+'」이 건네는 말이에요. '+s3.core+' '+
-    '그렇게 이야기는 조금씩 「'+c4.name+'」이 가리키는 쪽으로 방향을 틀어가요. '+s4.core;
+  var p3='이대로 흘러갔을 때 다가올 운의 흐름을 보여주는 「미래·운」의 자리에는 「'+c3.name+'」이 나타났어요. '+s3.core+' '+
+    '그리고 '+name+'님에게 가장 필요한 조언과 이 흐름이 다다르게 될 결과를 함께 담은 「조언 및 결과」의 자리에는 「'+c4.name+'」이 놓였습니다. '+s4.core;
 
   var actionBits=[s1.rest, s2.rest, s3.rest, s4.rest].filter(function(x){return x;});
   var closing='이 이야기는 이미 정해진 결말이 아니라, 지금부터 '+name+'님이 하나씩 채워갈 수 있는 여백에 가까워요. '+
@@ -2349,6 +2438,22 @@ function wealthTimingHtml(){
   '<div class="divider"></div>';
 }
 
+function soulCardHtml(){
+  var soul=getSoulCard();
+  var domainKey=CONCERN_DOMAIN_MAP[state.concern] || 'caution';
+  var domainText=soul.data.domains[domainKey];
+
+  return '<div class="panel-card panel-card-highlight">'+
+    '<h2 class="section-title">'+escapeHtml(state.name)+'님의 소울 넘버 · '+soul.num+'번 「'+soul.data.card+'」</h2>'+
+    '<p class="section-hint">태어난 해와 생년월일을 더해 한 자리 수가 될 때까지 계산하는, 타로 수비학의 기질 카드입니다.</p>'+
+    '<div class="prose">'+
+      '<p><strong style="color:var(--gold-soft);">'+soul.data.keyword+'</strong> — '+soul.data.strength+'</p>'+
+      '<p>'+domainText+'</p>'+
+    '</div>'+
+  '</div>'+
+  '<div class="divider"></div>';
+}
+
 function renderResult(){
   var sy=elementSynthesis(state.saju.counts);
   var pillars=state.saju.pillars;
@@ -2397,7 +2502,8 @@ function renderResult(){
         lackHtml+
       '</div>'+
     '</div>'+
-    '<div class="divider"></div>';
+    '<div class="divider"></div>'+
+    soulCardHtml();
 
   var gatedHtml=
     lifeFlowHtml()+
@@ -2443,6 +2549,7 @@ function renderResult(){
             '<input type="text" id="unlock-code-input" placeholder="해제 코드 입력">'+
             '<button class="btn btn-primary" id="unlock-btn">확인</button>'+
           '</div>'+
+          '<p class="pay-note">해제 코드 1개는 최대 3회까지 사용하실 수 있어요.</p>'+
           '<div class="unlock-error" id="unlock-error"></div>'+
         '</div>'+
       '</div>'+
@@ -2470,7 +2577,7 @@ function renderResult(){
             renderResult();
           } else {
             var msg='코드가 일치하지 않아요. 다시 확인해주세요.';
-            if(data && data.reason==='used') msg='이미 사용된 코드예요. 새 코드가 필요하시면 문의해주세요.';
+            if(data && data.reason==='used') msg='이미 3회 모두 사용된 코드예요. 새 코드가 필요하시면 문의해주세요.';
             errBox.textContent=msg;
             btn.disabled=false;
             btn.textContent='확인';
